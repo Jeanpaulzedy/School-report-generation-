@@ -1,0 +1,151 @@
+
+import React, { useState, useEffect } from 'react';
+import { Layout } from './components/Layout';
+import { LoginPage } from './pages/LoginPage';
+import { Dashboard } from './pages/Dashboard';
+import { StudentsPage } from './pages/StudentsPage';
+import { MarksEntryPage } from './pages/MarksEntryPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { UsersPage } from './pages/UsersPage';
+import { ClassesPage } from './pages/ClassesPage';
+import { SubjectsPage } from './pages/SubjectsPage';
+import { ExamTypesPage } from './pages/ExamTypesPage';
+import { ReportCardsPage } from './pages/ReportCardsPage';
+import { AIAssistantPage } from './pages/AIAssistantPage';
+import { AuthState, User, UserRole } from './types';
+import { supabase } from './supabaseClient';
+import { Database } from 'lucide-react';
+
+const App: React.FC = () => {
+  const [auth, setAuth] = useState<AuthState>({
+    user: null,
+    isAuthenticated: false,
+    loading: true,
+  });
+
+  const [currentPage, setCurrentPage] = useState<string>('dashboard');
+  const [schemaError, setSchemaError] = useState<boolean>(false);
+  
+  const ADMIN_EMAIL = 'jeanpaulnsengimana18@gmail.com';
+
+  useEffect(() => {
+    const checkInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+
+        if (session?.user) {
+          const email = session.user.email || '';
+          const isSystemAdmin = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+          
+          let userData: User = {
+            id: session.user.id,
+            username: email.split('@')[0],
+            full_name: isSystemAdmin ? 'Jean Paul (Administrator)' : 'Staff Member',
+            role: isSystemAdmin ? UserRole.ADMIN : UserRole.TEACHER,
+            email: email
+          };
+          
+          try {
+            const { data: profile, error: profileErr } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', session.user.id)
+              .maybeSingle();
+
+            if (profileErr) {
+              if (profileErr.code === '42P01') setSchemaError(true);
+              throw profileErr;
+            }
+
+            if (profile) {
+              userData = {
+                ...userData,
+                username: profile.username || userData.username,
+                full_name: profile.full_name || userData.full_name,
+                role: isSystemAdmin ? UserRole.ADMIN : (profile.role as UserRole || UserRole.TEACHER)
+              };
+            }
+          } catch (profileErr: any) {
+            console.warn("DB Profile unavailable:", profileErr.message);
+          }
+
+          setAuth({ user: userData, isAuthenticated: true, loading: false });
+        } else {
+          setAuth({ user: null, isAuthenticated: false, loading: false });
+        }
+      } catch (err: any) {
+        if (err.code === '42P01') setSchemaError(true);
+        setAuth({ user: null, isAuthenticated: false, loading: false });
+      }
+    };
+
+    checkInitialSession();
+  }, []);
+
+  if (schemaError) {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-900 p-6 text-center">
+        <div className="bg-rose-500 p-4 rounded-3xl shadow-2xl shadow-rose-500/20 mb-8">
+          <Database size={48} className="text-white" />
+        </div>
+        <h1 className="text-white text-3xl font-black uppercase tracking-tighter mb-4">Database Setup Required</h1>
+        <p className="text-slate-400 max-w-md font-medium leading-relaxed">
+          The application cannot find the required tables. Please run the SQL initialization script in your Supabase SQL Editor.
+        </p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="mt-10 bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-indigo-700 transition-all active:scale-95"
+        >
+          Reload Portal
+        </button>
+      </div>
+    );
+  }
+
+  if (auth.loading) {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
+        <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Initializing Portal...</p>
+      </div>
+    );
+  }
+
+  if (!auth.isAuthenticated || !auth.user) {
+    return <LoginPage onLogin={(user) => setAuth({ user, isAuthenticated: true, loading: false })} />;
+  }
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'dashboard': return <Dashboard user={auth.user!} />;
+      case 'students': return <StudentsPage user={auth.user!} />;
+      case 'marks': return <MarksEntryPage user={auth.user!} />;
+      case 'reports': return <ReportCardsPage user={auth.user!} />;
+      case 'ai-assistant': return <AIAssistantPage user={auth.user!} />;
+      case 'classes': return <ClassesPage />;
+      case 'subjects': return <SubjectsPage />;
+      case 'exam-types': return <ExamTypesPage />;
+      case 'users': return <UsersPage />;
+      case 'settings': return <SettingsPage user={auth.user!} />;
+      default: return <Dashboard user={auth.user!} />;
+    }
+  };
+
+  return (
+    <Layout 
+      user={auth.user} 
+      onLogout={async () => {
+        await supabase.auth.signOut();
+        setAuth({ user: null, isAuthenticated: false, loading: false });
+        setCurrentPage('dashboard');
+      }} 
+      currentPage={currentPage}
+      onNavigate={setCurrentPage}
+    >
+      {renderPage()}
+    </Layout>
+  );
+};
+
+export default App;

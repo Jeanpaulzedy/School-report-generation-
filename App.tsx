@@ -1,21 +1,21 @@
 
 import React, { useState, useEffect } from 'react';
-import { Layout } from './components/Layout';
-import { LoginPage } from './pages/LoginPage';
-import { Dashboard } from './pages/Dashboard';
-import { StudentsPage } from './pages/StudentsPage';
-import { MarksEntryPage } from './pages/MarksEntryPage';
-import { SettingsPage } from './pages/SettingsPage';
-import { UsersPage } from './pages/UsersPage';
-import { ClassesPage } from './pages/ClassesPage';
-import { SubjectsPage } from './pages/SubjectsPage';
-import { ExamTypesPage } from './pages/ExamTypesPage';
-import { ReportCardsPage } from './pages/ReportCardsPage';
-import { AIAssistantPage } from './pages/AIAssistantPage';
-import { AttendancePage } from './pages/AttendancePage';
-import { FinancePage } from './pages/FinancePage';
-import { AuthState, User, UserRole } from './types';
-import { supabase } from './supabaseClient';
+import { Layout } from './components/Layout.tsx';
+import { LoginPage } from './pages/LoginPage.tsx';
+import { Dashboard } from './pages/Dashboard.tsx';
+import { StudentsPage } from './pages/StudentsPage.tsx';
+import { MarksEntryPage } from './pages/MarksEntryPage.tsx';
+import { SettingsPage } from './pages/SettingsPage.tsx';
+import { UsersPage } from './pages/UsersPage.tsx';
+import { ClassesPage } from './pages/ClassesPage.tsx';
+import { SubjectsPage } from './pages/SubjectsPage.tsx';
+import { ExamTypesPage } from './pages/ExamTypesPage.tsx';
+import { ReportCardsPage } from './pages/ReportCardsPage.tsx';
+import { AIAssistantPage } from './pages/AIAssistantPage.tsx';
+import { AttendancePage } from './pages/AttendancePage.tsx';
+import { FinancePage } from './pages/FinancePage.tsx';
+import { AuthState, User, UserRole } from './types.ts';
+import { supabase } from './supabaseClient.ts';
 import { AlertTriangle } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -43,33 +43,27 @@ const App: React.FC = () => {
           let userData: User = {
             id: session.user.id,
             username: email.split('@')[0],
-            full_name: isSystemAdmin ? 'Jean Paul (Administrator)' : 'Staff Member',
+            full_name: isSystemAdmin ? 'Jean Paul (Admin)' : 'Staff Member',
             role: isSystemAdmin ? UserRole.ADMIN : UserRole.TEACHER,
             email: email
           };
           
           try {
-            const { data: profile, error: profileErr } = await supabase
+            const { data: profile } = await supabase
               .from('users')
               .select('*')
               .eq('id', session.user.id)
               .maybeSingle();
 
-            if (profileErr) {
-              if (profileErr.code === '42P01') setSchemaError(true);
-              throw profileErr;
-            }
-
             if (profile) {
               userData = {
                 ...userData,
-                username: profile.username || userData.username,
-                full_name: profile.full_name || userData.full_name,
+                ...profile,
                 role: isSystemAdmin ? UserRole.ADMIN : (profile.role as UserRole || UserRole.TEACHER)
               };
             }
-          } catch (profileErr: any) {
-            console.warn("DB Profile unavailable:", profileErr.message);
+          } catch (profileErr) {
+            console.warn("DB Profile unavailable");
           }
 
           setAuth({ user: userData, isAuthenticated: true, loading: false });
@@ -93,19 +87,12 @@ const App: React.FC = () => {
   if (schemaError) {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-900 p-6 text-center">
-        <div className="bg-rose-500 p-4 rounded-3xl shadow-2xl shadow-rose-500/20 mb-8">
+        <div className="bg-rose-500 p-4 rounded-3xl shadow-2xl mb-8">
           <AlertTriangle size={48} className="text-white" />
         </div>
-        <h1 className="text-white text-3xl font-black uppercase tracking-tighter mb-4">Database Migration Required</h1>
-        <p className="text-slate-400 max-w-md font-medium leading-relaxed">
-          The school records system is not yet initialized in your Supabase project. Please run the SQL setup script.
-        </p>
-        <button 
-          onClick={() => window.location.reload()}
-          className="mt-10 bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-indigo-700 transition-all active:scale-95"
-        >
-          Retry Connection
-        </button>
+        <h1 className="text-white text-3xl font-black uppercase tracking-tighter mb-4">Migration Required</h1>
+        <p className="text-slate-400 max-w-md font-medium">Please initialize your database schema in Supabase.</p>
+        <button onClick={() => window.location.reload()} className="mt-10 bg-indigo-600 text-white px-10 py-4 rounded-2xl font-bold uppercase tracking-widest text-xs">Retry</button>
       </div>
     );
   }
@@ -113,8 +100,8 @@ const App: React.FC = () => {
   if (auth.loading) {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
-        <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Syncing Academic Portal...</p>
+        <div className="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Loading Portal...</p>
       </div>
     );
   }
@@ -142,12 +129,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <Layout 
-      user={auth.user!} 
-      onLogout={handleLogout} 
-      currentPage={currentPage} 
-      onNavigate={setCurrentPage}
-    >
+    <Layout user={auth.user!} onLogout={handleLogout} currentPage={currentPage} onNavigate={setCurrentPage}>
       {renderPage()}
     </Layout>
   );

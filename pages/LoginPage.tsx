@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
-import { LogIn, ShieldAlert, Loader2, User as UserIcon, Lock, Globe, RefreshCw, WifiOff, AlertTriangle } from 'lucide-react';
+import { LogIn, ShieldAlert, Loader2, User as UserIcon, Lock, Globe, RefreshCw, WifiOff, AlertTriangle, GraduationCap } from 'lucide-react';
 import { supabase, checkConnection } from '../supabaseClient';
 
 interface LoginPageProps {
@@ -49,7 +49,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
       if (authError) {
         if (authError.message === 'Failed to fetch') {
-          throw new Error('NETWORK_ERROR: Browser could not reach Supabase. Check internet.');
+          throw new Error('NETWORK_ERROR: Could not reach server. Check internet.');
         }
         throw authError;
       }
@@ -73,10 +73,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             .eq('id', authData.user.id)
             .maybeSingle();
 
-          if (profileErr && profileErr.code === '42P01') {
-             throw new Error("DATABASE_NOT_INITIALIZED: Run the SQL initialization script.");
-          }
-
           if (profileData) {
             finalUser = {
               ...finalUser,
@@ -87,11 +83,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           }
         } catch (profileErr: any) {
           console.warn("Continuing with session profile:", profileErr.message);
-          if (profileErr.message?.includes('DATABASE_NOT_INITIALIZED')) {
-             setError(profileErr.message);
-             setLoading(false);
-             return;
-          }
         }
         
         onLogin(finalUser);
@@ -104,92 +95,102 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-[3rem] shadow-2xl overflow-hidden border border-slate-200">
-        <div className="bg-indigo-600 p-12 text-white text-center relative overflow-hidden">
-          <div className="relative z-10">
-            <h1 className="text-4xl font-black tracking-tighter uppercase leading-none">School AMIS</h1>
-            <p className="mt-2 text-indigo-100 font-bold uppercase tracking-[0.3em] text-[10px]">Rwanda National Portal</p>
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-6 font-sans">
+      <div className="max-w-[440px] w-full bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-200/60 overflow-hidden">
+        {/* Header Section */}
+        <div className="bg-indigo-600 p-10 text-white text-center relative overflow-hidden">
+          <div className="relative z-10 flex flex-col items-center">
+            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md mb-4 shadow-xl">
+              <GraduationCap size={32} />
+            </div>
+            <h1 className="text-3xl font-extrabold tracking-tight">School AMIS</h1>
+            <p className="text-indigo-100/80 font-semibold uppercase tracking-[0.2em] text-[10px] mt-1.5">Academic Management Portal</p>
           </div>
-          <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-white/10 rounded-full"></div>
+          {/* Decorative elements */}
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full"></div>
+          <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-white/5 rounded-full"></div>
         </div>
         
-        <form onSubmit={handleSubmit} className="p-10 space-y-8">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Login</h2>
-            
+        {/* Form Section */}
+        <div className="p-8 md:p-10">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-xl font-bold text-slate-800">Welcome Back</h2>
             <button 
               type="button"
               onClick={verifyConnection}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase border transition-all ${
-                connStatus.status === 'checking' ? 'bg-slate-50 text-slate-400 border-slate-100' :
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase border transition-all ${
+                connStatus.status === 'checking' ? 'bg-slate-50 text-slate-400 border-slate-200' :
                 connStatus.ok ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
                 'bg-rose-50 text-rose-600 border-rose-100 animate-pulse'
               }`}
             >
               {connStatus.status === 'checking' ? <RefreshCw size={12} className="animate-spin" /> : 
                connStatus.ok ? <Globe size={12} /> : <WifiOff size={12} />}
-              {connStatus.status}
+              {connStatus.status === 'checking' ? 'Syncing...' : connStatus.ok ? 'Connected' : 'Offline'}
             </button>
           </div>
 
           {error && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-600 p-5 rounded-2xl text-xs flex flex-col gap-3 animate-shake">
-              <div className="flex items-start gap-4">
-                <AlertTriangle className="shrink-0 mt-0.5" size={20} />
-                <div className="flex flex-col gap-1">
-                  <span className="font-bold leading-relaxed">{error}</span>
-                  {error.includes('DATABASE_NOT_INITIALIZED') && (
-                    <p className="text-rose-500 font-medium mt-2">Tables are missing. Please run the provided SQL script in your Supabase dashboard.</p>
-                  )}
-                </div>
-              </div>
+            <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+              <AlertTriangle className="text-rose-600 shrink-0 mt-0.5" size={18} />
+              <p className="text-xs font-semibold text-rose-700 leading-relaxed">{error}</p>
             </div>
           )}
 
-          <div className="space-y-6">
-            <div className="group">
-              <label className="block text-[11px] font-black text-indigo-900 uppercase tracking-[0.2em] mb-3 ml-1">Username / Email</label>
-              <div className="relative">
-                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Username or Email</label>
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
                   <UserIcon size={18} />
                 </div>
                 <input
                   type="text" required
-                  className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-indigo-600 outline-none transition-all font-bold text-slate-700 placeholder:text-slate-300"
-                  placeholder="Email or 'admin'"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50/50 outline-none transition-all font-semibold text-slate-700 placeholder:text-slate-300 text-sm"
+                  placeholder="admin or email@school.rw"
                   value={emailOrUser}
                   onChange={(e) => setEmailOrUser(e.target.value)}
                 />
               </div>
             </div>
 
-            <div className="group">
-              <label className="block text-[11px] font-black text-indigo-900 uppercase tracking-[0.2em] mb-3 ml-1">Password</label>
-              <div className="relative">
-                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center ml-1">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Password</label>
+                <a href="#" className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 uppercase tracking-wider">Forgot?</a>
+              </div>
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
                   <Lock size={18} />
                 </div>
                 <input
                   type="password" required
-                  className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-indigo-600 outline-none transition-all font-bold text-slate-700 placeholder:text-slate-300"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50/50 outline-none transition-all font-semibold text-slate-700 placeholder:text-slate-300 text-sm"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
             </div>
-          </div>
 
-          <button
-            type="submit"
-            disabled={loading || (!connStatus.ok && connStatus.status !== 'checking')}
-            className="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-3 disabled:bg-slate-300"
-          >
-            {loading ? <Loader2 className="animate-spin" size={20} /> : <LogIn size={20} />}
-            {loading ? 'Authenticating...' : 'Enter Portal'}
-          </button>
-        </form>
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-3 active:scale-[0.98] disabled:bg-slate-300 disabled:shadow-none"
+              >
+                {loading ? <Loader2 className="animate-spin" size={20} /> : <LogIn size={20} />}
+                {loading ? 'Entering Portal...' : 'Sign In'}
+              </button>
+            </div>
+          </form>
+          
+          <div className="mt-8 pt-8 border-t border-slate-100 text-center">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              Rwanda Ministry of Education • Official Access
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

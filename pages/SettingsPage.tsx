@@ -20,7 +20,6 @@ export const SettingsPage: React.FC<{ user: User }> = ({ user }) => {
         if (data) {
           setSettings(data);
         } else {
-          // Create initial settings if none exist
           const initial = {
             school_name: 'ESP RULI',
             academic_year: '2024/2025',
@@ -61,6 +60,13 @@ export const SettingsPage: React.FC<{ user: User }> = ({ user }) => {
     }
   };
 
+  const handleUpdateLogo = () => {
+    const newUrl = prompt("Enter School Logo URL:", settings?.logo_url);
+    if (newUrl && settings) {
+      setSettings({ ...settings, logo_url: newUrl });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-40 gap-4">
@@ -81,7 +87,6 @@ export const SettingsPage: React.FC<{ user: User }> = ({ user }) => {
         </div>
       )}
 
-      {/* Header Info */}
       <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col md:flex-row items-center gap-10 overflow-hidden relative">
         <div className="relative group z-10">
           <img 
@@ -89,7 +94,10 @@ export const SettingsPage: React.FC<{ user: User }> = ({ user }) => {
             alt="School Logo" 
             className="w-40 h-40 rounded-[2rem] object-cover border-4 border-white shadow-2xl"
           />
-          <button className="absolute inset-0 bg-indigo-900/60 opacity-0 group-hover:opacity-100 rounded-[2rem] flex flex-col items-center justify-center transition-all duration-300 text-white gap-2 backdrop-blur-sm">
+          <button 
+            onClick={handleUpdateLogo}
+            className="absolute inset-0 bg-indigo-900/60 opacity-0 group-hover:opacity-100 rounded-[2rem] flex flex-col items-center justify-center transition-all duration-300 text-white gap-2 backdrop-blur-sm"
+          >
             <Camera size={32} />
             <span className="text-[10px] font-black uppercase tracking-widest">Update Logo</span>
           </button>

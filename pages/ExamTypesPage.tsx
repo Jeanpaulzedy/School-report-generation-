@@ -8,6 +8,7 @@ export const ExamTypesPage: React.FC = () => {
   const [exams, setExams] = useState<ExamType[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,15 +34,21 @@ export const ExamTypesPage: React.FC = () => {
     fetchExams();
   }, []);
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleCreateOrUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setError(null);
     try {
-      const { error: insertError } = await supabase.from('exam_types').insert([formData]);
-      if (insertError) throw insertError;
+      if (editingId) {
+        const { error: upError } = await supabase.from('exam_types').update(formData).eq('id', editingId);
+        if (upError) throw upError;
+      } else {
+        const { error: insertError } = await supabase.from('exam_types').insert([formData]);
+        if (insertError) throw insertError;
+      }
       
       setShowModal(false);
+      setEditingId(null);
       setFormData({ name: '' });
       fetchExams();
     } catch (err: any) {
@@ -49,6 +56,12 @@ export const ExamTypesPage: React.FC = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleEdit = (exam: ExamType) => {
+    setFormData({ name: exam.name });
+    setEditingId(exam.id);
+    setShowModal(true);
   };
 
   return (
@@ -72,7 +85,7 @@ export const ExamTypesPage: React.FC = () => {
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Manage midterm and test categories</p>
           </div>
           <button 
-            onClick={() => setShowModal(true)}
+            onClick={() => { setEditingId(null); setFormData({ name: '' }); setShowModal(true); }}
             className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20"
           >
             <Plus size={16} />
@@ -112,7 +125,10 @@ export const ExamTypesPage: React.FC = () => {
                       <span className="px-3 py-1 bg-slate-100 rounded-lg text-[10px] font-black text-slate-500 uppercase">Independent (100%)</span>
                     </td>
                     <td className="px-8 py-5 text-right">
-                      <button className="text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-slate-100 transition-all">
+                      <button 
+                        onClick={() => handleEdit(exam)}
+                        className="text-slate-400 hover:text-indigo-600 p-2 rounded-xl hover:bg-indigo-50 transition-all"
+                      >
                         <Settings2 size={18} />
                       </button>
                     </td>
@@ -124,13 +140,12 @@ export const ExamTypesPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Create Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="bg-indigo-600 p-10 text-white flex justify-between items-center">
               <div>
-                <h3 className="text-2xl font-black tracking-tighter uppercase">Add Assessment</h3>
+                <h3 className="text-2xl font-black tracking-tighter uppercase">{editingId ? 'Edit Assessment' : 'Add Assessment'}</h3>
                 <p className="text-indigo-200 text-[10px] font-bold uppercase tracking-widest mt-1">Midterm Configuration</p>
               </div>
               <button onClick={() => setShowModal(false)} className="hover:bg-indigo-500 p-2 rounded-xl transition-colors">
@@ -138,7 +153,7 @@ export const ExamTypesPage: React.FC = () => {
               </button>
             </div>
             
-            <form onSubmit={handleCreate} className="p-10 space-y-8">
+            <form onSubmit={handleCreateOrUpdate} className="p-10 space-y-8">
               {error && (
                 <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl flex items-center gap-3 text-rose-600 text-xs font-bold">
                   <AlertCircle size={18} />
@@ -158,27 +173,13 @@ export const ExamTypesPage: React.FC = () => {
                     onChange={e => setFormData({...formData, name: e.target.value})}
                   />
                 </div>
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                   <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Calculation Note:</p>
-                   <p className="text-xs text-slate-600 mt-1">This assessment will be graded out of 100 independently from other tests.</p>
-                </div>
               </div>
 
               <div className="pt-6 flex gap-4">
-                <button 
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 py-5 text-slate-400 font-black uppercase tracking-widest text-[10px] hover:bg-slate-50 rounded-2xl transition-colors"
-                >
-                  Discard
-                </button>
-                <button 
-                  disabled={saving}
-                  type="submit"
-                  className="flex-1 bg-indigo-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2"
-                >
+                <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-5 text-slate-400 font-black uppercase tracking-widest text-[10px] hover:bg-slate-50 rounded-2xl transition-colors">Discard</button>
+                <button disabled={saving} type="submit" className="flex-1 bg-indigo-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2">
                   {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-                  {saving ? 'Saving...' : 'Register Test'}
+                  {saving ? 'Saving...' : (editingId ? 'Update Test' : 'Register Test')}
                 </button>
               </div>
             </form>

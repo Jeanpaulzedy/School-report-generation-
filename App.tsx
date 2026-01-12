@@ -12,9 +12,11 @@ import { SubjectsPage } from './pages/SubjectsPage';
 import { ExamTypesPage } from './pages/ExamTypesPage';
 import { ReportCardsPage } from './pages/ReportCardsPage';
 import { AIAssistantPage } from './pages/AIAssistantPage';
+import { AttendancePage } from './pages/AttendancePage';
+import { FinancePage } from './pages/FinancePage';
 import { AuthState, User, UserRole } from './types';
 import { supabase } from './supabaseClient';
-import { Database } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 const App: React.FC = () => {
   const [auth, setAuth] = useState<AuthState>({
@@ -83,21 +85,26 @@ const App: React.FC = () => {
     checkInitialSession();
   }, []);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setAuth({ user: null, isAuthenticated: false, loading: false });
+  };
+
   if (schemaError) {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-900 p-6 text-center">
         <div className="bg-rose-500 p-4 rounded-3xl shadow-2xl shadow-rose-500/20 mb-8">
-          <Database size={48} className="text-white" />
+          <AlertTriangle size={48} className="text-white" />
         </div>
-        <h1 className="text-white text-3xl font-black uppercase tracking-tighter mb-4">Database Setup Required</h1>
+        <h1 className="text-white text-3xl font-black uppercase tracking-tighter mb-4">Database Migration Required</h1>
         <p className="text-slate-400 max-w-md font-medium leading-relaxed">
-          The application cannot find the required tables. Please run the SQL initialization script in your Supabase SQL Editor.
+          The school records system is not yet initialized in your Supabase project. Please run the SQL setup script.
         </p>
         <button 
           onClick={() => window.location.reload()}
           className="mt-10 bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-indigo-700 transition-all active:scale-95"
         >
-          Reload Portal
+          Retry Connection
         </button>
       </div>
     );
@@ -107,7 +114,7 @@ const App: React.FC = () => {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
         <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Initializing Portal...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Syncing Academic Portal...</p>
       </div>
     );
   }
@@ -121,6 +128,8 @@ const App: React.FC = () => {
       case 'dashboard': return <Dashboard user={auth.user!} />;
       case 'students': return <StudentsPage user={auth.user!} />;
       case 'marks': return <MarksEntryPage user={auth.user!} />;
+      case 'attendance': return <AttendancePage user={auth.user!} />;
+      case 'finance': return <FinancePage />;
       case 'reports': return <ReportCardsPage user={auth.user!} />;
       case 'ai-assistant': return <AIAssistantPage user={auth.user!} />;
       case 'classes': return <ClassesPage />;
@@ -134,13 +143,9 @@ const App: React.FC = () => {
 
   return (
     <Layout 
-      user={auth.user} 
-      onLogout={async () => {
-        await supabase.auth.signOut();
-        setAuth({ user: null, isAuthenticated: false, loading: false });
-        setCurrentPage('dashboard');
-      }} 
-      currentPage={currentPage}
+      user={auth.user!} 
+      onLogout={handleLogout} 
+      currentPage={currentPage} 
       onNavigate={setCurrentPage}
     >
       {renderPage()}

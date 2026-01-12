@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
-import { User, UserRole } from '../types.ts';
-import { LogIn, Loader2, User as UserIcon, Lock, Globe, RefreshCw, GraduationCap, ArrowRight, ShieldCheck } from 'lucide-react';
-import { supabase, checkConnection } from '../supabaseClient.ts';
+import { User, UserRole } from '../types';
+import { LogIn, Loader2, User as UserIcon, Lock, Globe, GraduationCap, ArrowRight, ShieldCheck } from 'lucide-react';
+import { supabase, checkConnection } from '../supabaseClient';
 
 interface LoginPageProps {
   onLogin: (user: User) => void;
@@ -96,6 +95,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-xl font-bold text-slate-800">Account Sign In</h2>
             <button 
+              type="button"
               onClick={verifyConnection}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider border transition-all ${
                 connStatus.ok ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100 animate-pulse'

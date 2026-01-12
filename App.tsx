@@ -1,21 +1,20 @@
-
 import React, { useState, useEffect } from 'react';
-import { Layout } from './components/Layout.tsx';
-import { LoginPage } from './pages/LoginPage.tsx';
-import { Dashboard } from './pages/Dashboard.tsx';
-import { StudentsPage } from './pages/StudentsPage.tsx';
-import { MarksEntryPage } from './pages/MarksEntryPage.tsx';
-import { SettingsPage } from './pages/SettingsPage.tsx';
-import { UsersPage } from './pages/UsersPage.tsx';
-import { ClassesPage } from './pages/ClassesPage.tsx';
-import { SubjectsPage } from './pages/SubjectsPage.tsx';
-import { ExamTypesPage } from './pages/ExamTypesPage.tsx';
-import { ReportCardsPage } from './pages/ReportCardsPage.tsx';
-import { AIAssistantPage } from './pages/AIAssistantPage.tsx';
-import { AttendancePage } from './pages/AttendancePage.tsx';
-import { FinancePage } from './pages/FinancePage.tsx';
-import { AuthState, User, UserRole } from './types.ts';
-import { supabase } from './supabaseClient.ts';
+import { Layout } from './components/Layout';
+import { LoginPage } from './pages/LoginPage';
+import { Dashboard } from './pages/Dashboard';
+import { StudentsPage } from './pages/StudentsPage';
+import { MarksEntryPage } from './pages/MarksEntryPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { UsersPage } from './pages/UsersPage';
+import { ClassesPage } from './pages/ClassesPage';
+import { SubjectsPage } from './pages/SubjectsPage';
+import { ExamTypesPage } from './pages/ExamTypesPage';
+import { ReportCardsPage } from './pages/ReportCardsPage';
+import { AIAssistantPage } from './pages/AIAssistantPage';
+import { AttendancePage } from './pages/AttendancePage';
+import { FinancePage } from './pages/FinancePage';
+import { AuthState, User, UserRole } from './types';
+import { supabase } from './supabaseClient';
 import { AlertTriangle } from 'lucide-react';
 
 const App: React.FC = () => {
